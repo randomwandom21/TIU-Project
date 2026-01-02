@@ -1,0 +1,5 @@
+{
+  "name": "Consensus",
+  "description": "A minimalist media literacy tool that uses AI to separate bare facts from media spin across different news outlets.",
+  "requestFramePermissions": []
+}
