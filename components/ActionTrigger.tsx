@@ -14,12 +14,12 @@ export const ActionTrigger: React.FC<TriggerProps> = ({
   disabled,
   ...rest 
 }) => {
-  const coreClass = "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-semibold transition-all duration-150 text-sm outline-none ring-offset-slate-950 focus:ring-2";
+  const coreClass = "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md font-semibold transition-all duration-150 text-sm outline-none ring-offset-white dark:ring-offset-slate-950 focus:ring-2";
   
   const styles = {
     primary: "bg-violet-700 hover:bg-violet-600 text-white focus:ring-violet-400 shadow-lg shadow-violet-900/20",
-    ghost: "bg-slate-900 hover:bg-slate-800 text-slate-300 focus:ring-slate-700 border border-slate-800",
-    alert: "bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 border border-rose-900/40"
+    ghost: "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 focus:ring-slate-300 dark:focus:ring-slate-700 border border-slate-200 dark:border-slate-800 shadow-sm",
+    alert: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900/40"
   };
 
   return (

@@ -4,14 +4,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nuance | Media Auditing Tool</title>
+    <title>Consensus | Media Auditing Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Crucial: Tell Tailwind to use 'class' instead of 'media' for dark mode
+      tailwind.config = {
+        darkMode: 'class',
+      }
+      
+      // Support light/dark mode before hydration to prevent flash
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
     <style>
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        background-color: #020617; /* Slate 950 */
-        color: #f1f5f9; /* Slate 100 */
         overflow-x: hidden;
       }
       ::-webkit-scrollbar {
@@ -22,14 +33,55 @@
         background: transparent; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #1e293b; 
+        background: #94a3b8; 
         border-radius: 10px;
       }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #1e293b;
+      }
       ::-webkit-scrollbar-thumb:hover {
-        background: #334155; 
+        background: #64748b; 
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background: #334155;
       }
       .scrollbar-none::-webkit-scrollbar {
         display: none;
+      }
+
+      /* Print Optimization */
+      @media print {
+        nav, footer, button, .no-print {
+          display: none !important;
+        }
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        main {
+          padding-top: 0 !important;
+        }
+        .dark main {
+          color: black !important;
+        }
+        .grid {
+          display: block !important;
+        }
+        aside, .lg\:col-span-8 {
+          width: 100% !important;
+          margin-bottom: 2rem;
+        }
+        .flex {
+          display: block !important;
+        }
+        .snap-x {
+          overflow: visible !important;
+        }
+        .PublicationPanel {
+          break-inside: avoid;
+          margin-bottom: 2rem;
+          min-width: auto !important;
+        }
       }
     </style>
   <script type="importmap">
@@ -43,7 +95,7 @@
 }
 </script>
 </head>
-  <body>
+  <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200 transition-colors duration-300">
     <div id="root"></div>
   </body>
 </html>
