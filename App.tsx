@@ -1,125 +1,130 @@
+
 import React, { useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { InputSection } from './components/InputSection';
-import { FactsDisplay } from './components/FactsDisplay';
-import { OutletCard } from './components/OutletCard';
-import { Summary } from './components/Summary';
-import { AnalysisResult } from './types';
-import { analyzeNewsUrls } from './services/geminiService';
+import { SourceEntry } from './components/SourceEntry';
+import { GroundTruthView } from './components/GroundTruthView';
+import { PublicationPanel } from './components/PublicationPanel';
+import { SynopticOverview } from './components/SynopticOverview';
+import { MediaInsight } from './definitions';
+import { performCoverageAudit } from './logic/ai_engine';
 
-const App: React.FC = () => {
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [groundingLinks, setGroundingLinks] = useState<any[]>([]);
+const VeritasApp: React.FC = () => {
+  const [insight, setInsight] = useState<MediaInsight | null>(null);
+  const [working, setWorking] = useState(false);
+  const [fault, setFault] = useState<string | null>(null);
+  const [refs, setRefs] = useState<any[]>([]);
 
-  const handleAnalyze = async (urls: string[]) => {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-    setGroundingLinks([]);
+  const initiateAnalysis = async (urls: string[]) => {
+    setWorking(true);
+    setFault(null);
+    setInsight(null);
+    setRefs([]);
 
     try {
-      const response = await analyzeNewsUrls(urls);
-      setResult(response.data);
-      setGroundingLinks(response.grounding);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred while analyzing the articles.');
+      const { report, citations } = await performCoverageAudit(urls);
+      setInsight(report);
+      setRefs(citations);
+    } catch (e: any) {
+      setFault(e.message || "Engine failure detected during audit.");
     } finally {
-      setIsLoading(false);
+      setWorking(false);
     }
   };
 
-  const handleReset = () => {
-    setResult(null);
-    setError(null);
-    setGroundingLinks([]);
+  const restart = () => {
+    setInsight(null);
+    setFault(null);
+    setRefs([]);
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      {/* Navbar / Header */}
-      <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2" role="button" onClick={handleReset}>
-                <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                   <div className="w-2 h-2 bg-white rounded-full" />
-                </div>
-                <span className="font-bold tracking-tight text-lg cursor-pointer">Consensus</span>
+    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-violet-500/30">
+      {/* Navigation Header */}
+      <nav className="h-16 border-b border-slate-900 bg-slate-950/60 backdrop-blur-xl fixed top-0 inset-x-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={restart}>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+              <div className="w-2.5 h-2.5 bg-white rounded-sm" />
             </div>
-            {result && (
-                <button 
-                  onClick={handleReset}
-                  className="text-sm text-zinc-400 hover:text-white transition-colors"
-                >
-                    New Analysis
-                </button>
-            )}
+            <span className="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-100 to-slate-400">NUANCE</span>
+          </div>
+          
+          {insight && (
+            <button 
+              onClick={restart}
+              className="text-xs font-bold text-slate-500 hover:text-slate-200 uppercase tracking-widest transition-colors"
+            >
+              Restart Session
+            </button>
+          )}
         </div>
-      </header>
+      </nav>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-12 w-full">
-        {!result && (
-            <div className="max-w-4xl mx-auto pt-10">
-                <InputSection onAnalyze={handleAnalyze} isLoading={isLoading} />
-                
-                {error && (
-                    <div className="mt-8 p-4 bg-red-900/20 border border-red-900/50 text-red-200 rounded-lg text-sm text-center">
-                        {error}
-                    </div>
-                )}
-            </div>
-        )}
+      <main className="pt-32 pb-24 max-w-7xl mx-auto px-6">
+        {!insight ? (
+          <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <SourceEntry onProcess={initiateAnalysis} isProcessing={working} />
+            
+            {fault && (
+              <div className="mt-8 p-5 bg-rose-500/5 border border-rose-500/20 text-rose-400 rounded-2xl text-sm flex items-center gap-3">
+                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                {fault}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-20 animate-in zoom-in-95 duration-500">
+            {/* Split View: Data vs Narratives */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+              <aside className="lg:col-span-4 lg:sticky lg:top-24 h-fit">
+                <GroundTruthView data={insight.verified_facts} />
+              </aside>
 
-        {result && (
-            <div className="space-y-12 animate-fade-in">
-                {/* Top Section: Facts and Spin */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left Column: Facts (Sticky) */}
-                    <div className="lg:col-span-4 lg:sticky lg:top-24 h-fit">
-                        <FactsDisplay facts={result.facts} />
-                    </div>
-
-                    {/* Right Column: Outlets Horizontal Scroll/Grid */}
-                    <div className="lg:col-span-8 overflow-hidden">
-                        <div className="flex gap-6 overflow-x-auto pb-6 snap-x custom-scrollbar">
-                            {result.outlets.map((outlet, idx) => (
-                                <OutletCard key={idx} outlet={outlet} allFacts={result.facts} />
-                            ))}
-                        </div>
-                    </div>
+              <div className="lg:col-span-8">
+                <div className="flex gap-6 overflow-x-auto pb-8 snap-x scrollbar-none">
+                  {insight.publications.map((pub, idx) => (
+                    <PublicationPanel key={idx} source={pub} baseline={insight.verified_facts} />
+                  ))}
                 </div>
-
-                {/* Bottom Section: Summary */}
-                <div className="border-t border-zinc-800 pt-10">
-                    <h3 className="text-2xl font-bold mb-6 text-center text-zinc-200">Perspective Synthesis</h3>
-                    <Summary summary={result.perspective_summary} />
-                </div>
-
-                {/* Grounding Sources Footer */}
-                {groundingLinks.length > 0 && (
-                  <div className="mt-12 pt-6 border-t border-zinc-900 text-center">
-                    <p className="text-xs text-zinc-600 uppercase tracking-widest mb-3">Sources Found</p>
-                    <div className="flex flex-wrap justify-center gap-4 text-xs text-zinc-500">
-                      {groundingLinks.map((chunk, i) => (
-                        chunk.web?.uri ? (
-                          <a key={i} href={chunk.web.uri} target="_blank" rel="noreferrer" className="hover:text-indigo-400 truncate max-w-[200px] transition-colors">
-                            {chunk.web.title || chunk.web.uri}
-                          </a>
-                        ) : null
-                      ))}
-                    </div>
-                  </div>
-                )}
+              </div>
             </div>
+
+            {/* Bottom Insight Synthesis */}
+            <section className="pt-16 border-t border-slate-900">
+              <header className="mb-12 text-center">
+                <h3 className="text-3xl font-extrabold text-slate-100 tracking-tight">Editorial Landscape</h3>
+                <p className="text-slate-500 mt-2">Aggregated overview of coverage patterns</p>
+              </header>
+              <SynopticOverview summary={insight.synthesis} />
+            </section>
+
+            {/* Citation Metadata */}
+            {refs.length > 0 && (
+              <footer className="pt-10 border-t border-slate-900 flex flex-col items-center gap-6">
+                <h5 className="text-[10px] font-black text-slate-700 uppercase tracking-[0.3em]">Verification Footprints</h5>
+                <div className="flex flex-wrap justify-center gap-6">
+                  {refs.map((ref, i) => (
+                    ref.web?.uri && (
+                      <a key={i} href={ref.web.uri} target="_blank" className="text-xs text-slate-500 hover:text-violet-400 max-w-[180px] truncate transition-all">
+                        {ref.web.title || "External Source"}
+                      </a>
+                    )
+                  ))}
+                </div>
+              </footer>
+            )}
+          </div>
         )}
       </main>
 
-      <footer className="py-6 text-center text-zinc-700 text-xs border-t border-zinc-900">
-        <p>Powered by Gemini 2.5 • Focus on Content, Not Noise</p>
+      <footer className="py-12 border-t border-slate-900 flex flex-col items-center gap-4">
+        <div className="flex items-center gap-2 grayscale opacity-40">
+           <div className="w-2 h-2 rounded-full bg-slate-500" />
+           <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Engine v2.5.0-Release</span>
+        </div>
+        <p className="text-slate-700 text-[10px] font-medium uppercase tracking-[0.2em]">Objective Analysis • No Noise</p>
       </footer>
     </div>
   );
 };
 
-export default App;
+export default VeritasApp;
